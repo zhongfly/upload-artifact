@@ -9,10 +9,10 @@ name: Check dist/
 on:
   push:
     branches:
-      - custom
+      - main
   pull_request:
     branches:
-      - custom
+      - main
   workflow_dispatch:
 
 jobs:
