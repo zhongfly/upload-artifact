@@ -55,7 +55,7 @@ async function run(): Promise<void> {
       searchResult.filesToUpload.forEach(async(item) => {
         const uploadResponse = await artifactClient.uploadArtifact(
             basename(item),
-            item,
+            [item],
             dirname(item),
             options
         )
