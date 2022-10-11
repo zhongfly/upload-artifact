@@ -4736,6 +4736,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const artifact_1 = __webpack_require__(214);
+const path_1 = __webpack_require__(622);
 const search_1 = __webpack_require__(575);
 const input_helper_1 = __webpack_require__(583);
 const constants_1 = __webpack_require__(694);
@@ -4775,13 +4776,30 @@ function run() {
                 if (inputs.retentionDays) {
                     options.retentionDays = inputs.retentionDays;
                 }
-                const uploadResponse = yield artifactClient.uploadArtifact(inputs.artifactName, searchResult.filesToUpload, searchResult.rootDirectory, options);
-                if (uploadResponse.failedItems.length > 0) {
-                    core.setFailed(`An error was encountered when uploading ${uploadResponse.artifactName}. There were ${uploadResponse.failedItems.length} items that failed to upload.`);
-                }
-                else {
-                    core.info(`Artifact ${uploadResponse.artifactName} has been successfully uploaded!`);
-                }
+                searchResult.filesToUpload.forEach((item) => __awaiter(this, void 0, void 0, function* () {
+                    const uploadResponse = yield artifactClient.uploadArtifact(path_1.basename(item), [item], path_1.dirname(item), options);
+                    if (uploadResponse.failedItems.length > 0) {
+                        const tip = `An error was encountered when uploading ${item}. This file failed to upload.`;
+                        // No files were found, different use cases warrant different types of behavior if nothing is found
+                        switch (inputs.ifUploadFailed) {
+                            case constants_1.NoFileOptions.warn: {
+                                core.warning(tip);
+                                break;
+                            }
+                            case constants_1.NoFileOptions.error: {
+                                core.setFailed(tip);
+                                break;
+                            }
+                            case constants_1.NoFileOptions.ignore: {
+                                core.info(tip);
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        core.info(`Artifact ${item} has been successfully uploaded!`);
+                    }
+                }));
             }
         }
         catch (err) {
@@ -7174,17 +7192,21 @@ const constants_1 = __webpack_require__(694);
  * Helper to get all the inputs for the action
  */
 function getInputs() {
-    const name = core.getInput(constants_1.Inputs.Name);
     const path = core.getInput(constants_1.Inputs.Path, { required: true });
     const ifNoFilesFound = core.getInput(constants_1.Inputs.IfNoFilesFound);
     const noFileBehavior = constants_1.NoFileOptions[ifNoFilesFound];
     if (!noFileBehavior) {
         core.setFailed(`Unrecognized ${constants_1.Inputs.IfNoFilesFound} input. Provided: ${ifNoFilesFound}. Available options: ${Object.keys(constants_1.NoFileOptions)}`);
     }
+    const ifUploadFailed = core.getInput(constants_1.Inputs.IfUploadFailed);
+    const uploadFailedBehavior = constants_1.NoFileOptions[ifUploadFailed];
+    if (!noFileBehavior) {
+        core.setFailed(`Unrecognized ${constants_1.Inputs.IfUploadFailed} input. Provided: ${ifUploadFailed}. Available options: ${Object.keys(constants_1.NoFileOptions)}`);
+    }
     const inputs = {
-        artifactName: name,
         searchPath: path,
-        ifNoFilesFound: noFileBehavior
+        ifNoFilesFound: noFileBehavior,
+        ifUploadFailed: uploadFailedBehavior
     };
     const retentionDaysStr = core.getInput(constants_1.Inputs.RetentionDays);
     if (retentionDaysStr) {
@@ -8195,6 +8217,7 @@ var Inputs;
     Inputs["Name"] = "name";
     Inputs["Path"] = "path";
     Inputs["IfNoFilesFound"] = "if-no-files-found";
+    Inputs["IfUploadFailed"] = "if-upload-failed";
     Inputs["RetentionDays"] = "retention-days";
 })(Inputs = exports.Inputs || (exports.Inputs = {}));
 var NoFileOptions;
