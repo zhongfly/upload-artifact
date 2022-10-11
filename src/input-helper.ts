@@ -6,7 +6,6 @@ import {UploadInputs} from './upload-inputs'
  * Helper to get all the inputs for the action
  */
 export function getInputs(): UploadInputs {
-  const name = core.getInput(Inputs.Name)
   const path = core.getInput(Inputs.Path, {required: true})
 
   const ifNoFilesFound = core.getInput(Inputs.IfNoFilesFound)
@@ -22,10 +21,23 @@ export function getInputs(): UploadInputs {
     )
   }
 
+  const ifUploadFailed = core.getInput(Inputs.IfUploadFailed)
+  const uploadFailedBehavior: NoFileOptions = NoFileOptions[ifUploadFailed]
+
+  if (!noFileBehavior) {
+    core.setFailed(
+      `Unrecognized ${
+        Inputs.IfUploadFailed
+      } input. Provided: ${ifUploadFailed}. Available options: ${Object.keys(
+        NoFileOptions
+      )}`
+    )
+  }
+
   const inputs = {
-    artifactName: name,
     searchPath: path,
-    ifNoFilesFound: noFileBehavior
+    ifNoFilesFound: noFileBehavior,
+    ifUploadFailed: uploadFailedBehavior
   } as UploadInputs
 
   const retentionDaysStr = core.getInput(Inputs.RetentionDays)

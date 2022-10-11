@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import {create, UploadOptions} from '@actions/artifact'
+import {dirname, basename} from 'path'
 import {findFilesToUpload} from './search'
 import {getInputs} from './input-helper'
 import {NoFileOptions} from './constants'
@@ -51,22 +52,39 @@ async function run(): Promise<void> {
         options.retentionDays = inputs.retentionDays
       }
 
-      const uploadResponse = await artifactClient.uploadArtifact(
-        inputs.artifactName,
-        searchResult.filesToUpload,
-        searchResult.rootDirectory,
-        options
-      )
+      searchResult.filesToUpload.forEach(async(item) => {
+        const uploadResponse = await artifactClient.uploadArtifact(
+            basename(item),
+            item,
+            dirname(item),
+            options
+        )
 
-      if (uploadResponse.failedItems.length > 0) {
-        core.setFailed(
-          `An error was encountered when uploading ${uploadResponse.artifactName}. There were ${uploadResponse.failedItems.length} items that failed to upload.`
-        )
-      } else {
-        core.info(
-          `Artifact ${uploadResponse.artifactName} has been successfully uploaded!`
-        )
-      }
+        if (uploadResponse.failedItems.length > 0) {
+            const tip = `An error was encountered when uploading ${item}. This file failed to upload.`
+            // No files were found, different use cases warrant different types of behavior if nothing is found
+            switch (inputs.ifUploadFailed) {
+                case NoFileOptions.warn: {
+                    core.warning(tip)
+                    break
+                }
+                case NoFileOptions.error: {
+                    core.setFailed(tip)
+                    break
+                }
+                case NoFileOptions.ignore: {
+                    core.info(tip)
+                    break
+                }
+            }
+        } else {
+            core.info(
+            `Artifact ${item} has been successfully uploaded!`
+            )
+        }        
+      });
+
+
     }
   } catch (err) {
     core.setFailed(err.message)

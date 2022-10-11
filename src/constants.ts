@@ -2,6 +2,7 @@ export enum Inputs {
   Name = 'name',
   Path = 'path',
   IfNoFilesFound = 'if-no-files-found',
+  IfUploadFailed = 'if-upload-failed',
   RetentionDays = 'retention-days'
 }
 
