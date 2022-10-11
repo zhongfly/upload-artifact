@@ -52,39 +52,35 @@ async function run(): Promise<void> {
         options.retentionDays = inputs.retentionDays
       }
 
-      searchResult.filesToUpload.forEach(async(item) => {
+      searchResult.filesToUpload.forEach(async item => {
         const uploadResponse = await artifactClient.uploadArtifact(
-            basename(item),
-            [item],
-            dirname(item),
-            options
+          basename(item),
+          [item],
+          dirname(item),
+          options
         )
 
         if (uploadResponse.failedItems.length > 0) {
-            const tip = `An error was encountered when uploading ${item}. This file failed to upload.`
-            // No files were found, different use cases warrant different types of behavior if nothing is found
-            switch (inputs.ifUploadFailed) {
-                case NoFileOptions.warn: {
-                    core.warning(tip)
-                    break
-                }
-                case NoFileOptions.error: {
-                    core.setFailed(tip)
-                    break
-                }
-                case NoFileOptions.ignore: {
-                    core.info(tip)
-                    break
-                }
+          const tip = `An error was encountered when uploading ${item}. This file failed to upload.`
+          // No files were found, different use cases warrant different types of behavior if nothing is found
+          switch (inputs.ifUploadFailed) {
+            case NoFileOptions.warn: {
+              core.warning(tip)
+              break
             }
+            case NoFileOptions.error: {
+              core.setFailed(tip)
+              break
+            }
+            case NoFileOptions.ignore: {
+              core.info(tip)
+              break
+            }
+          }
         } else {
-            core.info(
-            `Artifact ${item} has been successfully uploaded!`
-            )
-        }        
-      });
-
-
+          core.info(`Artifact ${item} has been successfully uploaded!`)
+        }
+      })
     }
   } catch (err) {
     core.setFailed(err.message)

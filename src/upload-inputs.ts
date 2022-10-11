@@ -14,7 +14,7 @@ export interface UploadInputs {
   /**
    * The desired behavior if no files are found with the provided search path
    */
-   ifUploadFailed: NoFileOptions
+  ifUploadFailed: NoFileOptions
 
   /**
    * Duration after which artifact will expire in days
