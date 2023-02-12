@@ -82,8 +82,8 @@ async function run(): Promise<void> {
         }
       })
     }
-  } catch (err) {
-    core.setFailed(err.message)
+  } catch (error) {
+    core.setFailed((error as Error).message)
   }
 }
 
